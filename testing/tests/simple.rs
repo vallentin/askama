@@ -251,7 +251,7 @@ fn test_path_compare() {
 
 #[derive(Template)]
 #[template(
-    source = "{% for i in [\"a\", \"\"].iter() %}{{ i }}{% endfor %}",
+    source = "{% for i in [\"a\", \"\"] %}{{ i }}{% endfor %}",
     ext = "txt"
 )]
 struct ArrayTemplate {}
