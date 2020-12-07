@@ -257,7 +257,7 @@ pub fn truncate(s: &dyn fmt::Display, len: usize) -> Result<String> {
 }
 
 /// Indent lines with `width` spaces
-pub fn indent(s: &dyn fmt::Display, width: &usize) -> Result<String> {
+pub fn indent(s: &dyn fmt::Display, width: usize) -> Result<String> {
     let s = s.to_string();
 
     let mut indented = String::new();
@@ -266,7 +266,7 @@ pub fn indent(s: &dyn fmt::Display, width: &usize) -> Result<String> {
         indented.push(c);
 
         if c == '\n' && i < s.len() - 1 {
-            for _ in 0..*width {
+            for _ in 0..width {
                 indented.push(' ');
             }
         }
@@ -505,11 +505,11 @@ mod tests {
 
     #[test]
     fn test_indent() {
-        assert_eq!(indent(&"hello", &2).unwrap(), "hello");
-        assert_eq!(indent(&"hello\n", &2).unwrap(), "hello\n");
-        assert_eq!(indent(&"hello\nfoo", &2).unwrap(), "hello\n  foo");
+        assert_eq!(indent(&"hello", 2).unwrap(), "hello");
+        assert_eq!(indent(&"hello\n", 2).unwrap(), "hello\n");
+        assert_eq!(indent(&"hello\nfoo", 2).unwrap(), "hello\n  foo");
         assert_eq!(
-            indent(&"hello\nfoo\n bar", &4).unwrap(),
+            indent(&"hello\nfoo\n bar", 4).unwrap(),
             "hello\n    foo\n     bar"
         );
     }
