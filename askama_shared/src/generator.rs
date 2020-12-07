@@ -663,13 +663,19 @@ impl<'a, S: std::hash::BuildHasher> Generator<'a, S> {
             // If `iter` is a call then we assume it's something that returns
             // an iterator. If not then the user can explicitly add the needed
             // call without issues.
-            Expr::MethodCall(..) | Expr::PathCall(..) => buf.writeln(&format!(
-                ", _loop_item) in ::askama::helpers::TemplateLoop::new({}) {{",
+            Expr::MethodCall(..) | Expr::PathCall(..) | Expr::Index(..) => buf.writeln(&format!(
+                ", _loop_item) in ::askama::helpers::TemplateLoop::new(({}).into_iter()) {{",
+                expr_code
+            )),
+            // If accessing `self` then it most likely needs to be
+            // borrowed, to prevent an attempt of moving.
+            _ if expr_code.starts_with("self.") => buf.writeln(&format!(
+                ", _loop_item) in ::askama::helpers::TemplateLoop::new(((&{}).into_iter())) {{",
                 expr_code
             )),
             // Otherwise, we borrow `iter` assuming that it implements `IntoIterator`.
             _ => buf.writeln(&format!(
-                ", _loop_item) in ::askama::helpers::TemplateLoop::new(&({})) {{",
+                ", _loop_item) in ::askama::helpers::TemplateLoop::new(({}).into_iter()) {{",
                 expr_code
             )),
         }?;
@@ -1303,7 +1309,11 @@ impl<'a, S: std::hash::BuildHasher> Generator<'a, S> {
         obj: &Expr,
         key: &Expr,
     ) -> Result<DisplayWrap, CompileError> {
-        buf.write("&");
+        let borrow = matches!(key, Expr::Range(..));
+        if borrow {
+            buf.write("&");
+        }
+
         self.visit_expr(buf, obj)?;
         buf.write("[");
         self.visit_expr(buf, key)?;
