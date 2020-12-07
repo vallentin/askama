@@ -3,31 +3,31 @@ use std::iter::Peekable;
 
 pub struct TemplateLoop<I>
 where
-    I: Iterator,
+    I: IntoIterator,
 {
-    iter: Peekable<Enumerate<I>>,
+    iter: Peekable<Enumerate<I::IntoIter>>,
 }
 
 impl<I> TemplateLoop<I>
 where
-    I: Iterator,
+    I: IntoIterator,
 {
     #[inline]
     pub fn new(iter: I) -> Self {
         TemplateLoop {
-            iter: iter.enumerate().peekable(),
+            iter: iter.into_iter().enumerate().peekable(),
         }
     }
 }
 
 impl<I> Iterator for TemplateLoop<I>
 where
-    I: Iterator,
+    I: IntoIterator,
 {
-    type Item = (<I as Iterator>::Item, LoopItem);
+    type Item = (<I as IntoIterator>::Item, LoopItem);
 
     #[inline]
-    fn next(&mut self) -> Option<(<I as Iterator>::Item, LoopItem)> {
+    fn next(&mut self) -> Option<(<I as IntoIterator>::Item, LoopItem)> {
         self.iter.next().map(|(index, item)| {
             (
                 item,
