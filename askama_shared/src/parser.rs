@@ -51,6 +51,44 @@ pub enum Expr<'a> {
     RustMacro(&'a str, &'a str),
 }
 
+impl Expr<'_> {
+    /// Returns `true` if enough assumptions can be made,
+    /// determining that `self` is copyable.
+    pub fn is_copyable(&self) -> bool {
+        fn is_copyable(expr: &Expr, within_op: bool) -> bool {
+            use Expr::*;
+            match expr {
+                BoolLit(_) | NumLit(_) | StrLit(_) | CharLit(_) => true,
+                Unary(.., expr) => is_copyable(expr, true),
+                BinOp(_, lhs, rhs) => is_copyable(lhs, true) && is_copyable(rhs, true),
+                // FIXME: The parser should produce `NumLit(_)` instead of `Attr(NumLit(_), _)` for floats
+                Attr(obj, _) if matches!(obj.as_ref(), NumLit(_)) => true,
+                // The result of a call likely doesn't need to be borrowed,
+                // as in that case the call is more likely to return a
+                // reference in the first place then.
+                VarCall(..) | PathCall(..) | MethodCall(..) => true,
+                // If the `expr` is within a `Unary` or `BinOp` then
+                // an assumption can be made that the operand is copy.
+                // If not, then the value is moved and adding `.clone()`
+                // will solve that issue. However, if the operand is
+                // implicitly borrowed, then it's likely not even possible
+                // to get the template to compile.
+                _ => within_op && expr.is_attr_self(),
+            }
+        }
+        is_copyable(self, false)
+    }
+
+    /// Returns `true` if this is an `Attr` where the `obj` is `"self"`.
+    pub fn is_attr_self(&self) -> bool {
+        match self {
+            Expr::Attr(obj, _) if matches!(obj.as_ref(), Expr::Var("self")) => true,
+            Expr::Attr(obj, _) if matches!(obj.as_ref(), Expr::Attr(..)) => obj.is_attr_self(),
+            _ => false,
+        }
+    }
+}
+
 pub type When<'a> = (
     WS,
     Option<MatchVariant<'a>>,

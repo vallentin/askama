@@ -241,12 +241,12 @@ pub fn trim(s: &dyn fmt::Display) -> Result<String> {
 }
 
 /// Limit string length, appends '...' if truncated
-pub fn truncate(s: &dyn fmt::Display, len: &usize) -> Result<String> {
+pub fn truncate(s: &dyn fmt::Display, len: usize) -> Result<String> {
     let mut s = s.to_string();
-    if s.len() <= *len {
+    if s.len() <= len {
         Ok(s)
     } else {
-        let mut real_len = *len;
+        let mut real_len = len;
         while !s.is_char_boundary(real_len) {
             real_len += 1;
         }
@@ -257,7 +257,7 @@ pub fn truncate(s: &dyn fmt::Display, len: &usize) -> Result<String> {
 }
 
 /// Indent lines with `width` spaces
-pub fn indent(s: &dyn fmt::Display, width: &usize) -> Result<String> {
+pub fn indent(s: &dyn fmt::Display, width: usize) -> Result<String> {
     let s = s.to_string();
 
     let mut indented = String::new();
@@ -266,7 +266,7 @@ pub fn indent(s: &dyn fmt::Display, width: &usize) -> Result<String> {
         indented.push(c);
 
         if c == '\n' && i < s.len() - 1 {
-            for _ in 0..*width {
+            for _ in 0..width {
                 indented.push(' ');
             }
         }
@@ -277,7 +277,7 @@ pub fn indent(s: &dyn fmt::Display, width: &usize) -> Result<String> {
 
 #[cfg(feature = "num-traits")]
 /// Casts number to f64
-pub fn into_f64<T>(number: &T) -> Result<f64>
+pub fn into_f64<T>(number: T) -> Result<f64>
 where
     T: NumCast,
 {
@@ -286,7 +286,7 @@ where
 
 #[cfg(feature = "num-traits")]
 /// Casts number to isize
-pub fn into_isize<T>(number: &T) -> Result<isize>
+pub fn into_isize<T>(number: T) -> Result<isize>
 where
     T: NumCast,
 {
@@ -480,36 +480,36 @@ mod tests {
 
     #[test]
     fn test_truncate() {
-        assert_eq!(truncate(&"hello", &2).unwrap(), "he...");
+        assert_eq!(truncate(&"hello", 2).unwrap(), "he...");
         let a = String::from("您好");
         assert_eq!(a.len(), 6);
         assert_eq!(String::from("您").len(), 3);
-        assert_eq!(truncate(&"您好", &1).unwrap(), "您...");
-        assert_eq!(truncate(&"您好", &2).unwrap(), "您...");
-        assert_eq!(truncate(&"您好", &3).unwrap(), "您...");
-        assert_eq!(truncate(&"您好", &4).unwrap(), "您好...");
-        assert_eq!(truncate(&"您好", &6).unwrap(), "您好");
-        assert_eq!(truncate(&"您好", &7).unwrap(), "您好");
+        assert_eq!(truncate(&"您好", 1).unwrap(), "您...");
+        assert_eq!(truncate(&"您好", 2).unwrap(), "您...");
+        assert_eq!(truncate(&"您好", 3).unwrap(), "您...");
+        assert_eq!(truncate(&"您好", 4).unwrap(), "您好...");
+        assert_eq!(truncate(&"您好", 6).unwrap(), "您好");
+        assert_eq!(truncate(&"您好", 7).unwrap(), "您好");
         let s = String::from("🤚a🤚");
         assert_eq!(s.len(), 9);
         assert_eq!(String::from("🤚").len(), 4);
-        assert_eq!(truncate(&"🤚a🤚", &1).unwrap(), "🤚...");
-        assert_eq!(truncate(&"🤚a🤚", &2).unwrap(), "🤚...");
-        assert_eq!(truncate(&"🤚a🤚", &3).unwrap(), "🤚...");
-        assert_eq!(truncate(&"🤚a🤚", &4).unwrap(), "🤚...");
-        assert_eq!(truncate(&"🤚a🤚", &5).unwrap(), "🤚a...");
-        assert_eq!(truncate(&"🤚a🤚", &6).unwrap(), "🤚a🤚...");
-        assert_eq!(truncate(&"🤚a🤚", &9).unwrap(), "🤚a🤚");
-        assert_eq!(truncate(&"🤚a🤚", &10).unwrap(), "🤚a🤚");
+        assert_eq!(truncate(&"🤚a🤚", 1).unwrap(), "🤚...");
+        assert_eq!(truncate(&"🤚a🤚", 2).unwrap(), "🤚...");
+        assert_eq!(truncate(&"🤚a🤚", 3).unwrap(), "🤚...");
+        assert_eq!(truncate(&"🤚a🤚", 4).unwrap(), "🤚...");
+        assert_eq!(truncate(&"🤚a🤚", 5).unwrap(), "🤚a...");
+        assert_eq!(truncate(&"🤚a🤚", 6).unwrap(), "🤚a🤚...");
+        assert_eq!(truncate(&"🤚a🤚", 9).unwrap(), "🤚a🤚");
+        assert_eq!(truncate(&"🤚a🤚", 10).unwrap(), "🤚a🤚");
     }
 
     #[test]
     fn test_indent() {
-        assert_eq!(indent(&"hello", &2).unwrap(), "hello");
-        assert_eq!(indent(&"hello\n", &2).unwrap(), "hello\n");
-        assert_eq!(indent(&"hello\nfoo", &2).unwrap(), "hello\n  foo");
+        assert_eq!(indent(&"hello", 2).unwrap(), "hello");
+        assert_eq!(indent(&"hello\n", 2).unwrap(), "hello\n");
+        assert_eq!(indent(&"hello\nfoo", 2).unwrap(), "hello\n  foo");
         assert_eq!(
-            indent(&"hello\nfoo\n bar", &4).unwrap(),
+            indent(&"hello\nfoo\n bar", 4).unwrap(),
             "hello\n    foo\n     bar"
         );
     }
@@ -518,22 +518,22 @@ mod tests {
     #[test]
     #[allow(clippy::float_cmp)]
     fn test_into_f64() {
-        assert_eq!(into_f64(&1).unwrap(), 1.0 as f64);
-        assert_eq!(into_f64(&1.9).unwrap(), 1.9 as f64);
-        assert_eq!(into_f64(&-1.9).unwrap(), -1.9 as f64);
-        assert_eq!(into_f64(&(INFINITY as f32)).unwrap(), INFINITY);
-        assert_eq!(into_f64(&(-INFINITY as f32)).unwrap(), -INFINITY);
+        assert_eq!(into_f64(1).unwrap(), 1.0 as f64);
+        assert_eq!(into_f64(1.9).unwrap(), 1.9 as f64);
+        assert_eq!(into_f64(-1.9).unwrap(), -1.9 as f64);
+        assert_eq!(into_f64(INFINITY as f32).unwrap(), INFINITY);
+        assert_eq!(into_f64(-INFINITY as f32).unwrap(), -INFINITY);
     }
 
     #[cfg(feature = "num-traits")]
     #[test]
     fn test_into_isize() {
-        assert_eq!(into_isize(&1).unwrap(), 1 as isize);
-        assert_eq!(into_isize(&1.9).unwrap(), 1 as isize);
-        assert_eq!(into_isize(&-1.9).unwrap(), -1 as isize);
-        assert_eq!(into_isize(&(1.5 as f64)).unwrap(), 1 as isize);
-        assert_eq!(into_isize(&(-1.5 as f64)).unwrap(), -1 as isize);
-        match into_isize(&INFINITY) {
+        assert_eq!(into_isize(1).unwrap(), 1 as isize);
+        assert_eq!(into_isize(1.9).unwrap(), 1 as isize);
+        assert_eq!(into_isize(-1.9).unwrap(), -1 as isize);
+        assert_eq!(into_isize(1.5 as f64).unwrap(), 1 as isize);
+        assert_eq!(into_isize(-1.5 as f64).unwrap(), -1 as isize);
+        match into_isize(INFINITY) {
             Err(Fmt(fmt::Error)) => {}
             _ => panic!("Should return error of type Err(Fmt(fmt::Error))"),
         };

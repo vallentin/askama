@@ -1,0 +1,295 @@
+{% import "macro.html" as scope %}
+
+{% call scope::thrice(s) %}
+{% call scope::thrice(self.s) %}
+
+{% let a = "bar" %}
+{% call scope::thrice(a) %}
+
+
+{{ s }}
+{{ self.s }}
+
+{{ self::passthrough(s) }}
+{{ self::passthrough(self.s) }}
+
+
+{{ i == 2 }}
+{{ self.i == 2 }}
+
+{{ self::I }}
+{{ self::S }}
+
+{{ self::I == 2 }}
+{{ self::S == "foo" }}
+
+{{ Self::I }}
+{{ Self::S }}
+
+{{ self.t.0.1 }}
+
+
+{{ Self::add(1, self.i.clone()) }}
+{{ Self::add(self.i.clone(), 2) }}
+
+
+{{ String::from("foo") }}
+{{ String::from("foo") + "bar" }}
+{{ String::from(String::from("foo")) }}
+
+
+{{ self::parse("1") }}
+{{ self::parse(String::from("1") + "2") }}
+{{ self::parse(String::from("1") + String::from("2").as_str()) }}
+
+
+{{ self.i.to_string() }}
+{{ (self.i + 2).to_string() }}
+{{ (self.i + self.i).to_string() }}
+{{ (1 + self.i).to_string() }}
+
+
+{{ self::passthrough(self.i + 3) }}
+{{ self::passthrough(2 + 3) }}
+{{ self::passthrough(2 + self.i) }}
+{{ self::passthrough(self.i + self.i) }}
+
+
+{{ self::passthrough(String::from("foo")) }}
+{{ self::passthrough(String::from(String::from("foo"))) }}
+
+{{ self::parse(self::passthrough("1")) }}
+{{ self::parse(self::passthrough(String::from("1") + "2")) }}
+{{ self::parse(self::passthrough(String::from("1") + String::from("2").as_str())) }}
+
+{{ "{:?}"|format(self.t)|safe }}
+
+
+{% macro i_foo(x) %}
+    {% if x == 2 %}
+    {% endif %}
+{% endmacro %}
+
+{% macro i_bar(x) %}
+    {% call i_foo(x) %}
+{% endmacro %}
+
+{% call i_foo(self.i) %}
+{% call i_bar(self.i) %}
+
+{% call i_foo(self.i + 1) %}
+{% call i_bar(self.i + 1) %}
+
+{% call i_foo(2) %}
+{% call i_bar(2) %}
+
+{% call i_foo(3) %}
+{% call i_bar(3) %}
+
+
+{{ s == "foo" }}
+{{ self.s == "foo" }}
+
+{% if self.s == "foo" %}
+{% endif %}
+
+{% macro s_foo(x) %}
+    {{ self.s == "foo" }}
+
+    {% if self.s == "foo" %}
+    {% endif %}
+
+    {% if "foo" == self.s %}
+    {% endif %}
+
+    {% if x == "foo" %}
+    {% endif %}
+
+    {% if "foo" == x %}
+    {% endif %}
+{% endmacro %}
+
+{% macro s_bar(x) %}
+    {% call s_foo(x) %}
+    {% call s_foo("foo") %}
+    {% call s_foo(String::from("foo")) %}
+{% endmacro %}
+
+{% call s_foo(self.s) %}
+{% call s_bar(self.s) %}
+
+{% call s_foo("foo") %}
+{% call s_bar("foo") %}
+
+{% call s_foo("bar") %}
+{% call s_bar("bar") %}
+
+
+{% let n = 2 + 3 %}
+{{ n }} {{ n + 4 }} {{ 4 + n }}
+
+{% macro foo(x) %}
+    {% let b = x + 1 %}
+    {{ x }}
+    {{ b }}
+{% endmacro %}
+
+{% macro bar(x) %}
+    {% let c = x + 1 %}
+    {% call foo(x + 1) %}
+    {% call foo(c + 1) %}
+{% endmacro %}
+
+{% call foo(2 + 3) %}
+{% call bar(2 + 3) %}
+
+{% call foo(self.i) %}
+{% call bar(self.i) %}
+
+
+{% macro a(vec) %}
+    {{ self.v.is_empty() }}
+    {{ v.is_empty() }}
+    {{ vec.is_empty() }}
+
+    {{ "{:?}"|format(self.v) }}
+    {{ "{:?}"|format(v) }}
+    {{ "{:?}"|format(vec) }}
+
+    {{ self.v|join(", ") }}
+    {{ v|join(", ") }}
+    {{ vec|join(", ") }}
+
+    {{ self::vec_ref(self.v) }}
+    {{ self::vec_ref(v) }}
+    {{ self::vec_ref(vec) }}
+    {{ self::slice_ref(self.v) }}
+    {{ self::slice_ref(v) }}
+    {{ self::slice_ref(vec) }}
+
+    {% if self.v.is_empty() %}
+    {% else if v.is_empty() %}
+    {% else if vec.is_empty() %}
+    {% endif %}
+{% endmacro %}
+
+{% macro b(vec) %}
+    {% call a(vec) %}
+{% endmacro %}
+
+{% macro c(vec) %}
+    {% call b(vec) %}
+{% endmacro %}
+
+{% call a(self.v) %}
+{% call b(self.v) %}
+{% call c(self.v) %}
+
+
+{% for i in 0..10 %}
+    {{i}}
+{% endfor %}
+
+
+{% for a in v %}
+{% endfor %}
+
+{% for a in v.iter() %}
+{% endfor %}
+
+
+{{ "{:?}"|format(v)|safe }}
+{{ "{:?}"|format(vv)|safe }}
+{{ "{:?}"|format(vvv)|safe }}
+
+
+{% for v in vv -%}
+    {{ "{:?}"|format(v)|safe }}
+    {% for v in v -%}
+        {{ v }}
+    {% endfor -%}
+    {% for v in v -%}
+        {{ v }}
+    {% endfor -%}
+{% endfor %}
+
+{% for v in vvv -%}
+    {{ "{:?}"|format(v)|safe }}
+    {% for v in v -%}
+        {{- "{:?}"|format(v)|safe }}
+        {% for v in v -%}
+            {{ v }}
+        {% endfor -%}
+    {% endfor -%}
+    {% for v in v -%}
+        {{ "{:?}"|format(v)|safe }}
+        {% for v in v -%}
+            {{ v }}
+        {% endfor -%}
+    {% endfor -%}
+{% endfor %}
+
+{% for v in vv[0] %}
+{% endfor %}
+{% for v in self.vv[0] %}
+{% endfor %}
+{% for v in self.vv.get(0).unwrap() %}
+{% endfor %}
+
+{% for v in self.vvv.get(0).unwrap().get(0).unwrap() %}
+{% endfor %}
+
+
+{{ self.m.len() }}
+{{ m.len() }}
+
+{{ "{:?}"|format(self.m)|safe }}
+{{ "{:?}"|format(m)|safe }}
+
+
+{% for entry in m %}
+{% endfor %}
+
+{% for entry in self.m %}
+{% endfor %}
+
+{% for entry in self.m %}
+    {{ "{:?}"|format(entry)|safe }}
+{% endfor %}
+
+{% for entry in self.m.iter() %}
+{% endfor %}
+
+{% for entry in self.m.keys() %}
+{% endfor %}
+
+{% for entry in self.m.values() %}
+{% endfor %}
+
+
+{% for (i, line) in self.s.lines().enumerate() %}
+{% endfor %}
+
+
+{% for entry in std::iter::once("foo") %}
+{% endfor %}
+
+{% for entry in std::iter::repeat("foo").take(10) %}
+{% endfor %}
+
+
+{% for a in v %}
+    {% if loop.first %}
+        {{a}}
+    {% else %}
+        {{loop.index}}: {{a}}
+    {% endif %}
+{% endfor %}
+
+{% for a in v.iter() %}
+    {% if loop.first %}
+        {{a}}
+    {% else %}
+        {{loop.index}}: {{a}}
+    {% endif %}
+{% endfor %}
